@@ -66,6 +66,7 @@
     <button class="button" onclick="toggleFullScreen()">Full Screen</button>
 </div>
 <select id="color-column" onchange="updatePolygonColors()">
+    <option value="Весь город">Весь город</option>
     <option value="Бары">Бары</option>
     <option value="Кафе">Кафе</option>
     <option value="Каршеринг">Каршеринг</option>
@@ -178,14 +179,15 @@ map.on('load', () => {
 });
 
 function resetMap() {
-    map.setFilter('highlighted-polygon-outline', ['==', 'id', '']);
+    map.setFilter('custom-data-layer', null);  // Removes any filters (shows all polygons)
     map.flyTo({
         center: [76.879751, 43.24517],
         zoom: 12,
-        essential: true // this animation is considered essential with respect to prefers-reduced-motion
+        essential: true
     });
     document.getElementById('sidebar').innerHTML = '';
 }
+
 
 function toggleFullScreen() {
     var button = document.querySelector('.button-container .button:nth-child(2)');
@@ -201,18 +203,31 @@ function toggleFullScreen() {
 }
 
 function updatePolygonColors() {
-    const colorProperty = document.getElementById('color-column').value;
-    map.setPaintProperty('custom-data-layer', 'fill-color', [
-        'interpolate',
-        ['linear'],
-        ['get', colorProperty],
-        0, 'rgba(241, 248, 246, 0.45)',
-        1, 'rgba(17, 87, 171, 0.65)',           // тёмно-синий
-        2, 'rgba(0, 128, 128, 0.65)',        // сине-зелёный
-        3, 'rgba(144, 238, 144, 0.65)',      // светло-зелёный
-        5, 'rgba(0, 100, 0, 0.65)'           // тёмно-зелёный
-    ]);
+    const selectedCategory = document.getElementById('color-column').value;
+
+    // Category mapping to category_id
+    const categoryMapping = {
+        "Бары": 1,
+        "Кафе": 2,
+        "Каршеринг": 3,
+        "Кинотеатры": 4,
+        "Коворкинги": 5,
+        "Отели": 6,
+        "Метро": 7,
+        "Музеи": 8,
+        "Обмен валют": 9,
+        "Парки": 10,
+        "Театры": 11,
+        "Торговые центры": 12
+    };
+
+    const selectedCategoryId = categoryMapping[selectedCategory];
+
+    // Apply filter to show only selected category polygons
+    map.setFilter('custom-data-layer', ['==', ['get', 'category_id'], selectedCategoryId]);
 }
+
+
 </script>
 </body>
 </html>
