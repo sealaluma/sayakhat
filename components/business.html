@@ -140,30 +140,49 @@ map.on('load', () => {
     // When a click event occurs on a feature in the custom data layer,
     // open a sidebar with information about the polygon and fly to it.
     map.on('click', 'custom-data-layer', (e) => {
-        const properties = e.features[0].properties;
-        let sidebarContent = '<div style="width: 100%;">';
-        for (const key in properties) {
-            if (properties.hasOwnProperty(key) && key !== 'Всего' && properties[key] !== 0) {
-                sidebarContent += `<p><strong>${key}:</strong> ${properties[key]}</p>`;
-            }
-        }
-        sidebarContent += '</div>';
-        document.getElementById('sidebar').innerHTML = sidebarContent;
+    const properties = e.features[0].properties;
+    
+    // Choose only specific properties to show
+    let sidebarContent = `
+        <p><strong>Название:</strong> ${properties.name_ru || properties.name_eng || 'Неизвестно'}</p>
+        <p><strong>Адрес:</strong> ${properties.address || 'Не указан'}</p>
+        <p><strong>Рейтинг:</strong> ${properties.rating || 'Не указан'}</p>
+        <p><strong>Время работы:</strong> ${properties.work_hours || 'Не указан'}</p>
 
-        // Reset the style of all outlines
-        map.setPaintProperty('custom-data-layer', 'fill-outline-color', 'rgba(200, 200, 200, 0.5)');
-        map.setPaintProperty('custom-data-layer', 'fill-outline-width', 1);
+    `;
 
-        // Set a bold outline for the selected polygon
-        map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
-        map.setPaintProperty('highlighted-polygon-outline', 'line-width', 4);
+    document.getElementById('sidebar').innerHTML = sidebarContent;
 
-        map.flyTo({
-            center: e.lngLat,
-            zoom: 14,
-            essential: true // this animation is considered essential with respect to prefers-reduced-motion
-        });
+    // Highlight selected polygon
+    map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
+    map.flyTo({ center: e.lngLat, zoom: 14, essential: true });
     });
+
+    // map.on('click', 'custom-data-layer', (e) => {
+    //     const properties = e.features[0].properties;
+    //     let sidebarContent = '<div style="width: 100%;">';
+    //     for (const key in properties) {
+    //         if (properties.hasOwnProperty(key) && key !== 'Всего' && properties[key] !== 0) {
+    //             sidebarContent += `<p><strong>${key}:</strong> ${properties[key]}</p>`;
+    //         }
+    //     }
+    //     sidebarContent += '</div>';
+    //     document.getElementById('sidebar').innerHTML = sidebarContent;
+
+    //     // Reset the style of all outlines
+    //     map.setPaintProperty('custom-data-layer', 'fill-outline-color', 'rgba(200, 200, 200, 0.5)');
+    //     map.setPaintProperty('custom-data-layer', 'fill-outline-width', 1);
+
+    //     // Set a bold outline for the selected polygon
+    //     map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
+    //     map.setPaintProperty('highlighted-polygon-outline', 'line-width', 4);
+
+    //     map.flyTo({
+    //         center: e.lngLat,
+    //         zoom: 14,
+    //         essential: true // this animation is considered essential with respect to prefers-reduced-motion
+    //     });
+    // });
 
     // Change the cursor to a pointer when
     // the mouse is over the custom data layer.
@@ -205,7 +224,13 @@ function toggleFullScreen() {
 function updatePolygonColors() {
     const selectedCategory = document.getElementById('color-column').value;
 
-    // Category mapping to category_id
+    // If "Весь город" is selected, remove the filter
+    if (selectedCategory === "Весь город") {
+        map.setFilter('custom-data-layer', null);  // Show all hexagons
+        return;
+    }
+
+    // Mapping categories to category_id
     const categoryMapping = {
         "Бары": 1,
         "Кафе": 2,
@@ -226,6 +251,7 @@ function updatePolygonColors() {
     // Apply filter to show only selected category polygons
     map.setFilter('custom-data-layer', ['==', ['get', 'category_id'], selectedCategoryId]);
 }
+
 
 
 </script>
