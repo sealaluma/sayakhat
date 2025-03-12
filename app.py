@@ -119,37 +119,37 @@
 #     app()
 
 
-import streamlit as st
+# import streamlit as st
 
 # Define page functions
-def home_page():
-    st.title("Главная")
-    st.write("Добро пожаловать на главную страницу.")
-    if st.button("Перейти к странице анализа"):
-        st.session_state.page = "analysis"
-    if st.button("Перейти к странице статистики"):
-        st.session_state.page = "statistics"
+# def home_page():
+#     st.title("Главная")
+#     st.write("Добро пожаловать на главную страницу.")
+#     if st.button("Перейти к странице анализа"):
+#         st.session_state.page = "analysis"
+#     if st.button("Перейти к странице статистики"):
+#         st.session_state.page = "statistics"
 
-def analysis_page():
-    st.title("Анализ")
-    st.write("Это страница анализа.")
-    if st.button("Вернуться на главную"):
-        st.session_state.page = "home"
+# def analysis_page():
+#     st.title("Анализ")
+#     st.write("Это страница анализа.")
+#     if st.button("Вернуться на главную"):
+#         st.session_state.page = "home"
 
-def statistics_page():
-    st.title("Статистика")
-    st.write("Это страница статистики.")
-    if st.button("Вернуться на главную"):
-        st.session_state.page = "home"
+# def statistics_page():
+#     st.title("Статистика")
+#     st.write("Это страница статистики.")
+#     if st.button("Вернуться на главную"):
+#         st.session_state.page = "home"
 
-# Initialize session state
-if "page" not in st.session_state:
-    st.session_state.page = "home"
+# # Initialize session state
+# if "page" not in st.session_state:
+#     st.session_state.page = "home"
 
-# Render the current page
-if st.session_state.page == "home":
-    home_page()
-elif st.session_state.page == "analysis":
-    analysis_page()
-elif st.session_state.page == "statistics":
-    statistics_page()
+# # Render the current page
+# if st.session_state.page == "home":
+#     home_page()
+# elif st.session_state.page == "analysis":
+#     analysis_page()
+# elif st.session_state.page == "statistics":
+#     statistics_page()
