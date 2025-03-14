@@ -93,6 +93,7 @@ mapboxgl.accessToken = 'pk.eyJ1Ijoic2VhbGltYSIsImEiOiJjbTdvcDUwd2IwN2o4Mm1zZXBra
 
 map.on('load', () => {
     // Replace this URL with your own GeoJSON data URL
+    // https://raw.githubusercontent.com/sealaluma/sayakhaaaaaaaaaaaaaaaaaaaaaaaaaat/main/t_objects_hex%20(2).geojson
     const geojsonUrl = 'https://raw.githubusercontent.com/sealaluma/sayakhaaaaaaaaaaaaaaaaaaaaaaaaaat/main/t_objects_hex%20(2).geojson';
 
     // Add a source for your GeoJSON data.
@@ -157,32 +158,6 @@ map.on('load', () => {
     map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
     map.flyTo({ center: e.lngLat, zoom: 14, essential: true });
     });
-
-    // map.on('click', 'custom-data-layer', (e) => {
-    //     const properties = e.features[0].properties;
-    //     let sidebarContent = '<div style="width: 100%;">';
-    //     for (const key in properties) {
-    //         if (properties.hasOwnProperty(key) && key !== 'Всего' && properties[key] !== 0) {
-    //             sidebarContent += `<p><strong>${key}:</strong> ${properties[key]}</p>`;
-    //         }
-    //     }
-    //     sidebarContent += '</div>';
-    //     document.getElementById('sidebar').innerHTML = sidebarContent;
-
-    //     // Reset the style of all outlines
-    //     map.setPaintProperty('custom-data-layer', 'fill-outline-color', 'rgba(200, 200, 200, 0.5)');
-    //     map.setPaintProperty('custom-data-layer', 'fill-outline-width', 1);
-
-    //     // Set a bold outline for the selected polygon
-    //     map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
-    //     map.setPaintProperty('highlighted-polygon-outline', 'line-width', 4);
-
-    //     map.flyTo({
-    //         center: e.lngLat,
-    //         zoom: 14,
-    //         essential: true // this animation is considered essential with respect to prefers-reduced-motion
-    //     });
-    // });
 
     // Change the cursor to a pointer when
     // the mouse is over the custom data layer.
