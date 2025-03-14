@@ -141,23 +141,37 @@ map.on('load', () => {
     // When a click event occurs on a feature in the custom data layer,
     // open a sidebar with information about the polygon and fly to it.
     map.on('click', 'custom-data-layer', (e) => {
-    const properties = e.features[0].properties;
-    
-    // Choose only specific properties to show
-    let sidebarContent = `
-        <p><strong>Название:</strong> ${properties.name_ru || properties.name_eng || 'Неизвестно'}</p>
-        <p><strong>Адрес:</strong> ${properties.address || 'Не указан'}</p>
-        <p><strong>Рейтинг:</strong> ${properties.rating || 'Не указан'}</p>
-        <p><strong>Время работы:</strong> ${properties.work_hours || 'Не указан'}</p>
+    const features = map.queryRenderedFeatures(e.point, {
+        layers: ['custom-data-layer']
+    });
 
-    `;
+    if (!features.length) return;
 
+    let sidebarContent = '<strong>Объекты в данной области:</strong><ul>';
+
+    features.forEach(feature => {
+        const properties = feature.properties;
+        sidebarContent += `
+            <li>
+                <strong>Название:</strong> ${properties.name_ru || properties.name_eng || 'Неизвестно'}<br>
+                <strong>Адрес:</strong> ${properties.address || 'Не указан'}<br>
+                <strong>Рейтинг:</strong> ${properties.rating || 'Не указан'}<br>
+                <strong>Время работы:</strong> ${properties.work_hours || 'Не указано'}
+            </li>
+            <hr>
+        `;
+    });
+
+    sidebarContent += '</ul>';
+    document.getElementById('sidebar').style.overflowY = 'auto';
+    document.getElementById('sidebar').style.maxHeight = '400px'; // Adjust height as needed
     document.getElementById('sidebar').innerHTML = sidebarContent;
 
-    // Highlight selected polygon
-    map.setFilter('highlighted-polygon-outline', ['==', 'id', e.features[0].id]);
+    // Выделяем хексагон
+    map.setFilter('highlighted-polygon-outline', ['==', 'id', features[0].id]);
     map.flyTo({ center: e.lngLat, zoom: 14, essential: true });
-    });
+});
+
 
     // Change the cursor to a pointer when
     // the mouse is over the custom data layer.
