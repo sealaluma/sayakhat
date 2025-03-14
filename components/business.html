@@ -147,7 +147,10 @@ map.on('load', () => {
 
     if (!features.length) return;
 
-    let sidebarContent = '<strong>Объекты в данной области:</strong><ul>';
+    let sidebarContent = `
+        <button id="closeSidebar" style="float:right; background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">X</button>
+        <strong>Объекты в данной области:</strong>
+        <ul>`;
 
     features.forEach(feature => {
         const properties = feature.properties;
@@ -163,14 +166,22 @@ map.on('load', () => {
     });
 
     sidebarContent += '</ul>';
-    document.getElementById('sidebar').style.overflowY = 'auto';
-    document.getElementById('sidebar').style.maxHeight = '400px'; // Adjust height as needed
-    document.getElementById('sidebar').innerHTML = sidebarContent;
+    
+    const sidebar = document.getElementById('sidebar');
+    sidebar.style.overflowY = 'auto';
+    sidebar.style.maxHeight = '400px'; // Adjust height as needed
+    sidebar.innerHTML = sidebarContent;
+
+    // Add event listener to close button
+    document.getElementById('closeSidebar').addEventListener('click', () => {
+        sidebar.innerHTML = ''; // Clear sidebar content
+    });
 
     // Выделяем хексагон
     map.setFilter('highlighted-polygon-outline', ['==', 'id', features[0].id]);
     map.flyTo({ center: e.lngLat, zoom: 14, essential: true });
 });
+
 
 
     // Change the cursor to a pointer when
