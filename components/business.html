@@ -91,23 +91,21 @@ mapboxgl.accessToken = 'pk.eyJ1Ijoic2VhbGltYSIsImEiOiJjbTdvcDUwd2IwN2o4Mm1zZXBra
             zoom: 12
 });
 
-map.on('load', () => {
-    // Replace this URL with your own GeoJSON data URL
-    // https://raw.githubusercontent.com/sealaluma/sayakhaaaaaaaaaaaaaaaaaaaaaaaaaat/main/t_objects_hex%20(2).geojson
+map.on('load', async () => {
     const geojsonUrl = 'https://raw.githubusercontent.com/sealaluma/sayakhaaaaaaaaaaaaaaaaaaaaaaaaaat/main/t_objects_hex%20(2).geojson';
+    const response = await fetch(geojsonUrl);
+    const geojsonData = await response.json();
 
-    // Add a source for your GeoJSON data.
     map.addSource('custom-data', {
         'type': 'geojson',
-        'data': geojsonUrl
+        'data': geojsonData
     });
 
-    // Add a layer showing your GeoJSON data.
     map.addLayer({
-    'id': 'custom-data-layer',
-    'type': 'fill',
-    'source': 'custom-data',
-    'paint': {
+        'id': 'custom-data-layer',
+        'type': 'fill',
+        'source': 'custom-data',
+        'paint': {
         'fill-color': [
             'case',
             ['has', 'Всего'], 
@@ -122,12 +120,10 @@ map.on('load', () => {
         ],
         'fill-opacity': 0.5,  // Adjust transparency (0 = fully transparent, 1 = solid)
         'fill-outline-color': 'rgba(0, 0, 0, 1)'  // Black outline, fully visible
-    }
-});
-
-
-    // Add a layer for the highlighted polygon outline.
-    map.addLayer({
+        }
+    });
+        // Add a layer for the highlighted polygon outline.
+        map.addLayer({
         'id': 'highlighted-polygon-outline',
         'type': 'line',
         'source': 'custom-data',
@@ -138,74 +134,111 @@ map.on('load', () => {
         }
     });
 
-    // When a click event occurs on a feature in the custom data layer,
-    // open a sidebar with information about the polygon and fly to it.
-    map.on('click', 'custom-data-layer', (e) => {
-    const features = map.queryRenderedFeatures(e.point, {
-        layers: ['custom-data-layer']
+    const pointsGeoJSON = {
+        'type': 'FeatureCollection',
+        'features': geojsonData.features.map(feature => ({
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [feature.properties.longitude, feature.properties.latitude]
+            },
+            'properties': feature.properties
+        }))
+    };
+
+    map.addSource('points-data', {
+        'type': 'geojson',
+        'data': pointsGeoJSON
     });
 
-    if (!features.length) return;
+    map.addLayer({
+        'id': 'points-layer',
+        'type': 'circle',
+        'source': 'points-data',
+        'paint': {
+            'circle-radius': 4,
+            'circle-color': '#FF0000',
+            'circle-stroke-width': 1,
+            'circle-stroke-color': '#FFFFFF'
+        }
+    });
+
+    map.on('click', (e) => {
+    const sidebar = document.getElementById('sidebar');
+
+    // Проверяем точки (points-layer)
+    const pointFeatures = map.queryRenderedFeatures(e.point, { layers: ['points-layer'] });
+    if (pointFeatures.length) {
+        const properties = pointFeatures[0].properties;
+        sidebar.innerHTML = `
+            <strong>${properties.name_ru || properties.name_eng || 'Неизвестно'}</strong><br>
+            Адрес: ${properties.address || 'Не указан'}<br>
+            Рейтинг: ${properties.rating || 'Не указан'}<br>
+            Время работы: ${properties.work_hours || 'Не указано'}
+            <button id="closeSidebar" style="float:right; background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">X</button>
+        `;
+
+        // Добавляем обработчик закрытия
+        document.getElementById('closeSidebar').addEventListener('click', () => {
+            sidebar.innerHTML = '';
+        });
+
+        return;
+    }
+
+    // Проверяем полигоны (custom-data-layer)
+    const polygonFeatures = map.queryRenderedFeatures(e.point, { layers: ['custom-data-layer'] });
+    if (!polygonFeatures.length) return;
 
     let sidebarContent = `
         <button id="closeSidebar" style="float:right; background:red; color:white; border:none; padding:5px 10px; cursor:pointer;">X</button>
         <strong>Объекты в данной области:</strong>
-        <ul>`;
+        <div style="max-height: 300px; overflow-y: auto; padding-right: 5px;">
+            <ul>
+    `;
 
-    features.forEach(feature => {
+    // Проходимся по всем объектам в выбранном хексагоне
+    polygonFeatures.forEach(feature => {
         const properties = feature.properties;
         sidebarContent += `
             <li>
-                <strong>Название:</strong> ${properties.name_ru || properties.name_eng || 'Неизвестно'}<br>
-                <strong>Адрес:</strong> ${properties.address || 'Не указан'}<br>
-                <strong>Рейтинг:</strong> ${properties.rating || 'Не указан'}<br>
-                <strong>Время работы:</strong> ${properties.work_hours || 'Не указано'}
+                <strong>${properties.name_ru || properties.name_eng || 'Неизвестно'}</strong><br>
+                Адрес: ${properties.address || 'Не указан'}<br>
+                Рейтинг: ${properties.rating || 'Не указан'}<br>
+                Время работы: ${properties.work_hours || 'Не указано'}
             </li>
             <hr>
         `;
     });
 
-    sidebarContent += '</ul>';
-    
-    const sidebar = document.getElementById('sidebar');
-    sidebar.style.overflowY = 'auto';
-    sidebar.style.maxHeight = '400px'; // Adjust height as needed
+    sidebarContent += `</ul></div>`;
+
     sidebar.innerHTML = sidebarContent;
 
-    // Add event listener to close button
+    // Добавляем обработчик закрытия
     document.getElementById('closeSidebar').addEventListener('click', () => {
-        sidebar.innerHTML = ''; // Clear sidebar content
+        sidebar.innerHTML = '';
     });
 
-    // Выделяем хексагон
-    map.setFilter('highlighted-polygon-outline', ['==', 'id', features[0].id]);
-    map.flyTo({ center: e.lngLat, zoom: 14, essential: true });
-});
-
-
-
-    // Change the cursor to a pointer when
-    // the mouse is over the custom data layer.
-    map.on('mouseenter', 'custom-data-layer', () => {
-        map.getCanvas().style.cursor = 'pointer';
-    });
-
-    // Change the cursor back to a pointer
-    // when it leaves the custom data layer.
-    map.on('mouseleave', 'custom-data-layer', () => {
-        map.getCanvas().style.cursor = '';
+    // Выделяем хексагон (берем ID первого объекта, но это ок, если все объекты в одном хексагоне)
+    map.setFilter('highlighted-polygon-outline', ['==', 'id', polygonFeatures[0].properties.id]);
     });
 });
-
+    
 function resetMap() {
-    map.setFilter('custom-data-layer', null);  // Removes any filters (shows all polygons)
+    map.setFilter('custom-data-layer', null);  // Показывать все хексагоны
+    map.setFilter('points-layer', null);  // Показывать все точки
+
     map.flyTo({
         center: [76.879751, 43.24517],
         zoom: 12,
         essential: true
     });
+
     document.getElementById('sidebar').innerHTML = '';
+    document.getElementById('color-column').value = "Весь город"; // Сбросить select
 }
+
 
 
 function toggleFullScreen() {
@@ -224,13 +257,14 @@ function toggleFullScreen() {
 function updatePolygonColors() {
     const selectedCategory = document.getElementById('color-column').value;
 
-    // If "Весь город" is selected, remove the filter
+    // Если выбрана категория "Весь город", сбрасываем фильтры
     if (selectedCategory === "Весь город") {
-        map.setFilter('custom-data-layer', null);  // Show all hexagons
+        map.setFilter('custom-data-layer', null); // Показывать все хексагоны
+        map.setFilter('points-layer', null); // Показывать все точки
         return;
     }
 
-    // Mapping categories to category_id
+    // Соответствие названий категорий их ID
     const categoryMapping = {
         "Бары": 1,
         "Кафе": 2,
@@ -243,16 +277,18 @@ function updatePolygonColors() {
         "Обмен валют": 9,
         "Парки": 10,
         "Театры": 11,
-        "Торговые центры": 12
+        "Торговые центры": 12,
+        "Хостелы": 13,
+        "Мотели": 14,
+        "Глемпинг": 15
     };
 
     const selectedCategoryId = categoryMapping[selectedCategory];
 
-    // Apply filter to show only selected category polygons
+    // Фильтруем хексагоны и точки по category_id
     map.setFilter('custom-data-layer', ['==', ['get', 'category_id'], selectedCategoryId]);
+    map.setFilter('points-layer', ['==', ['get', 'category_id'], selectedCategoryId]);
 }
-
-
 
 </script>
 </body>
